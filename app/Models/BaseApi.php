@@ -42,13 +42,13 @@ class BaseApi extends Model
     }
 
     /**
-     * Get the api_call_log associated with the BaseApi
+     * Get all of the api_call_log for the BaseApi
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function api_call_log(): HasOne
+    public function api_call_log(): HasMany
     {
-        return $this->hasOne(ApiCallLog::class);
+        return $this->hasMany(ApiCallLog::class);
     }
 
     public function getEndPoint() {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\ApiCallLogResource;
+use App\Models\BaseApi;
 use App\Models\ApiCallLog;
 use App\Services\ApiCall;
 use Illuminate\Http\Request;
@@ -44,7 +45,7 @@ class ApiCallLogController extends Controller
 
         if ($validator->passes() ){
 
-            $baseApi = ApiCallLog::findOrFail( $validated['id'] );
+            $baseApi = BaseApi::findOrFail( $validated['id'] );
 
             return (new ApiCall($baseApi))->makeCall();
 

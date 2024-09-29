@@ -37,7 +37,7 @@ class ApiController extends Controller
             'description' => 'string|max:255',
             'status' => 'in:enabled,disabled',
             'headers' => 'array',
-            'payload' => 'array|required_if:method,post,put',
+            'payload' => 'array|required_if:method,post,put,patch',
             'parameters' => 'array',
         ]);
 
@@ -159,35 +159,6 @@ class ApiController extends Controller
         }else {
             return response()->json($validator->errors()->all(),);
         }
-
-    }
-
-    /**
-     * .
-     */
-    public function analytics(Request $request)
-    {
-        $baseApis = BaseApi::all();
-
-        $activeApis = BaseApi::getActiveApis();
-
-        $successfulCalls = ApiCallLog::getSuccessfulCalls();
-        $totalResponseTime = ApiCallLog::getTotalResponseTime();
-
-        $data = [
-            "totalApiEndpoints" => $totalCount = $baseApis->count(),
-            "activeApiEndpoints" => $activeCount = $activeApis->count(),
-            "inactiveApiEndpoints" => $totalCount - $activeCount,
-            "apiCallStatistics" => [
-                "totalCalls" => $totalCallsCount = ApiCallLog::all()->count(),
-                "successfulCalls" => $successCount = $successfulCalls->count(),
-                "failedCalls" => $totalCallsCount - $successCount,
-                "averageResponseTime" => ($totalCallsCount) ? ($totalResponseTime / $totalCallsCount) : 0,
-            ]
-        ];
-
-        return response()->json($data, 200);
-
     }
 
     /**
@@ -221,6 +192,60 @@ class ApiController extends Controller
         }else {
             return response()->json($validator->errors()->all(),);
         }
+    }
+
+    /**
+     * .
+     */
+    public function analytics()
+    {
+        $baseApis = BaseApi::all();
+
+        $activeApis = BaseApi::getActiveApis();
+
+        $successfulCalls = ApiCallLog::getSuccessfulCalls();
+        $totalResponseTime = ApiCallLog::getTotalResponseTime();
+
+        $data = [
+            "totalApiEndpoints" => $totalCount = $baseApis->count(),
+            "activeApiEndpoints" => $activeCount = $activeApis->count(),
+            "inactiveApiEndpoints" => $totalCount - $activeCount,
+            "apiCallStatistics" => [
+                "totalCalls" => $totalCallsCount = ApiCallLog::all()->count(),
+                "successfulCalls" => $successCount = $successfulCalls->count(),
+                "failedCalls" => $totalCallsCount - $successCount,
+                "averageResponseTime" => ($totalCallsCount) ? ($totalResponseTime / $totalCallsCount) : 0,
+            ]
+        ];
+
+        return response()->json($data, 200);
+
+    }
+
+    /**
+     * Displays a log of API calls made.
+     */
+    public function history()
+    {
+        $baseApis = BaseApi::all()
+        ->map( function ($base_api) {
+
+            $callLogs = $base_api->api_call_log;
+
+            return [
+                "apiName" => $base_api->endpoint,
+                "method" => $base_api->method,
+                "callsMade" => $callsMade = $callLogs->count(),
+                "averageResponseTime" => ($callsMade) ?
+                number_format($callLogs->reduce(function($sum,$log){
+                    return $sum += intVal($log->response_time);
+                }, 0) / $callsMade, 2) : 0,
+                "status" => $base_api->status,
+            ];
+        });
+
+        return response()->json($baseApis, 200);
+
     }
 
 

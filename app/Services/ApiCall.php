@@ -25,25 +25,24 @@ class ApiCall
      */
     public function makeCall(): ApiCallLogResource
     {
-
         $endpoint = $this->baseApi->getEndPoint();
         $method = $this->baseApi->getMethod();
         $headers = $this->baseApi->getHeaders();
         $payload = $this->baseApi->getPayload();
         $parameters = $this->baseApi->getParameters();
 
-        $start_time = microtime(true);
+        $start_time = microtime(true);  // start of response
         if ( $method == 'post' || $method == 'put' || $method == 'patch' ) {
             $response = Http::withHeaders($headers)
-            ->withQueryParameters($parameters??[])
+            ->withQueryParameters( $parameters ?? [] )
             ->$method($endpoint, $payload);
 
         }else{
             $response = Http::withHeaders($headers)
-            ->withQueryParameters($parameters??[])
-            ->$method($endpoint, $payload);
+            ->withQueryParameters( $parameters ?? [] )
+            ->$method($endpoint);
         }
-        $data['response_time'] = microtime(true) - $start_time;
+        $data['response_time'] = microtime(true) - $start_time; // end of response
 
         $data['base_api_id'] = $this->baseApi->id;
         $data['status'] = $response->ok() ? 'success':'failed';

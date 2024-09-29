@@ -33,6 +33,7 @@ Route::controller(ApiController::class)->group(function () {
     Route::get('/apis/filter', 'filter')->name('apis.filter');
     Route::get('/apis/status', 'status')->name('apis.status');
     Route::get('/apis/analytics', 'analytics')->name('apis.analytics');
+    Route::get('/apis/history', 'history')->name('apis.history');
     Route::get('/apis/{id}', 'show')->name('apis.show');
 });
 
