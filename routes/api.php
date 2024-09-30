@@ -6,6 +6,7 @@ use App\Http\Resource\UserResource as User;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\ApiCallLogController;
+use App\Http\Controllers\ApiKeyController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -30,8 +31,8 @@ Route::controller(ApiController::class)->group(function () {
     Route::get('/apis/edit/{id}', 'edit')->name('apis.edit');
     Route::post('/apis/update/{id}', 'update')->name('apis.update');
     Route::delete('/apis/delete/{id}', 'destroy')->name('apis.delete');
+    Route::post('/apis/status', 'status')->name('apis.status');
     Route::get('/apis/filter', 'filter')->name('apis.filter');
-    Route::get('/apis/status', 'status')->name('apis.status');
     Route::get('/apis/analytics', 'analytics')->name('apis.analytics');
     Route::get('/apis/history', 'history')->name('apis.history');
     Route::get('/apis/{id}', 'show')->name('apis.show');
@@ -47,4 +48,19 @@ Route::controller(ApiCallLogController::class)->group(function () {
     Route::get('/call-logs/filter', 'filter')->name('call-logs.filter');
     Route::get('/call-logs/analytics', 'analytics')->name('call-logs.analytics');
     Route::get('/call-logs/{id}', 'show')->name('call-logs.show');
+});
+
+// ----------------------------API KEY MGMT. ------------------------------//
+Route::controller(ApiKeyController::class)->group(function () {
+    Route::get('/apikeys', 'index')->name('apikeys.index');
+    Route::post('/apikeys/store', 'store')->name('apikeys.store');
+    Route::get('/apikeys/edit/{id}', 'edit')->name('apikeys.edit');
+    Route::post('/apikeys/update/{id}', 'update')->name('apikeys.update');
+    Route::delete('/apikeys/delete/{id}', 'destroy')->name('apikeys.delete');
+    Route::post('/apikeys/regenerate/{id}', 'regenerate')->name('apikeys.regenerate');
+    Route::post('/apikeys/revoke/{id}', 'revoke')->name('apikeys.revoke');
+    Route::get('/apikeys/analytics', 'analytics')->name('apikeys.analytics');
+    Route::get('/apikeys/search', 'search')->name('apikeys.search');
+    Route::get('/apikeys/filter', 'filter')->name('apikeys.filter');
+    Route::get('/apikeys/{id}', 'show')->name('apikeys.show');
 });
