@@ -84,9 +84,44 @@ class UserController extends Controller
 
         return response()->json([
             "success" => true,
-            "message" => "API endpoint deleted successfully."
+            "message" => "User deleted successfully."
         ]);
 
+    }
+
+    /**
+     * Enable/Disable User.
+     */
+    public function status(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        if ( !$request->accepts(['application/json']) ) {
+            return response()->json('Only JSON Format accepted',);
+        }
+
+        $validated = json_decode(json_encode($request->all()), true);
+
+        $validator = Validator::make($validated, [
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        if ($validator->passes() ){
+
+            $user->update(['status' => $validated['status']]);
+
+            $action = ($user->status == 'active') ?
+            'activated' : 'deactivated';
+
+            return response()->json([
+                "success" => true,
+                "message" => "User $action successfully.",
+                "status" => $user->status,
+            ], 200);
+
+        }else {
+            return response()->json($validator->errors()->all(),);
+        }
     }
 
     /**
@@ -107,24 +142,25 @@ class UserController extends Controller
             'filterType' => 'sometimes|in:admin,developer,viewer|nullable',
         ]);
 
+        // return response()->json($validated,);
+
         if ($validator->passes() ){
 
             $conditions = [];
-            if (isset($validated['filterName']) && $validated['filterName']) {
-                $conditions[] = ['first_name', 'LIKE', $validated['filterName']."%"];
+            if (isset($validated['filterName']) && ($filterName = $validated['filterName']) && $filterName) {
+                $conditions[] = ['first_name', 'LIKE', "%$filterName%"];
             }
-            if (isset($validated['filterStatus']) && $validated['filterStatus']) {
-                $conditions[] = ['status', $validated['filterStatus']];
+            if (isset($validated['filterStatus']) && ($filterStatus = $validated['filterStatus']) && $filterStatus) {
+                $conditions[] = ['status', $filterStatus];
             }
-            if (isset($validated['filterEmail']) && $validated['filterEmail']) {
-                $conditions[] = ['method', $validated['filterEmail']];
+            if (isset($validated['filterEmail']) && ($filterEmail = $validated['filterEmail']) && $filterEmail) {
+                $conditions[] = ['email', "%$filterEmail%"];
             }
-            if (isset($validated['filterType']) && $validated['filterType']) {
-                $conditions[] = ['type', $validated['filterType']];
+            if (isset($validated['filterType']) && ($filterType = $validated['filterType']) && $filterType) {
+                $conditions[] = ['type', $filterType];
             }
 
-            $user = User::latest()
-            ->where($conditions)
+            $user = User::latest()->where($conditions)
             ->get();
 
             return new UserResource($user);

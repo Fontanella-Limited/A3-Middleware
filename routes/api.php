@@ -20,6 +20,7 @@ Route::controller(UserController::class)->group(function () {
     Route::get('/users/edit/{id}', 'edit')->name('users.edit');
     Route::post('/users/update/{id}', 'update')->name('users.update');
     Route::delete('/users/delete/{id}', 'destroy')->name('users.delete');
+    Route::post('/users/status/{id}', 'status')->name('users.status');
     Route::get('/users/filter', 'filter')->name('users.filter');
     Route::get('/users/{id}', 'show')->name('users.show');
 });
@@ -31,7 +32,8 @@ Route::controller(ApiController::class)->group(function () {
     Route::get('/apis/edit/{id}', 'edit')->name('apis.edit');
     Route::post('/apis/update/{id}', 'update')->name('apis.update');
     Route::delete('/apis/delete/{id}', 'destroy')->name('apis.delete');
-    Route::post('/apis/status', 'status')->name('apis.status');
+    Route::post('/apis/status/{id}', 'status')->name('apis.status');
+    Route::get('/apis/search', 'search')->name('apis.search');
     Route::get('/apis/filter', 'filter')->name('apis.filter');
     Route::get('/apis/analytics', 'analytics')->name('apis.analytics');
     Route::get('/apis/history', 'history')->name('apis.history');
@@ -45,6 +47,7 @@ Route::controller(ApiCallLogController::class)->group(function () {
     Route::get('/call-logs/edit/{id}', 'edit')->name('call-logs.edit');
     Route::post('/call-logs/update/{id}', 'update')->name('call-logs.update');
     Route::delete('/call-logs/delete/{id}', 'destroy')->name('call-logs.delete');
+    Route::get('/call-logs/search', 'search')->name('call-logs.search');
     Route::get('/call-logs/filter', 'filter')->name('call-logs.filter');
     Route::get('/call-logs/analytics', 'analytics')->name('call-logs.analytics');
     Route::get('/call-logs/{id}', 'show')->name('call-logs.show');

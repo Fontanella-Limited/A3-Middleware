@@ -121,6 +121,35 @@ class ApiController extends Controller
     }
 
     /**
+     * Search a listing of the resource.
+     */
+    public function search(Request $request)
+    {
+        if ( !$request->accepts(['application/json']) ) {
+            return response()->json('Only JSON Format accepted',);
+        }
+
+        $validated = json_decode(json_encode($request->all()), true);
+
+        $validator = Validator::make($validated, [
+            'searchBy' => 'required|in:endpoint,method,description',
+            'searchQuery' => 'sometimes|string|max:255|nullable',
+        ]);
+
+        if ($validator->passes() ){
+
+            $apiKeys = BaseApi::latest()
+            ->where($validated['searchBy'], 'LIKE', "%".$validated['searchQuery']."%")
+            ->get();
+
+            return BaseApiResource::collection($apiKeys);
+
+        }else {
+            return response()->json($validator->errors()->all(),);
+        }
+    }
+
+    /**
      * Filter a listing of the resource.
      */
     public function filter(Request $request)
@@ -132,29 +161,38 @@ class ApiController extends Controller
         $validated = json_decode(json_encode($request->all()), true);
 
         $validator = Validator::make($validated, [
-            'searchQuery' => 'sometimes|string|max:255|nullable',
             'filterMethod' => 'sometimes|in:post,get,put,patch,head,delete|nullable',
             'filterStatus' => 'sometimes|in:enabled,disabled|nullable',
+            'filterCreationDateRange' => 'sometimes|array|min:0',
+                'filterCreationDateRange.startDate' => 'sometimes|date|nullable',
+                'filterCreationDateRange.endDate' => 'sometimes|date|nullable',
+            'filterExpiryDate' => 'sometimes|date|nullable',
         ]);
 
         if ($validator->passes() ){
 
             $conditions = [];
-            if ($validated['searchQuery']) {
-                $conditions[] = ['endpoint', $validated['searchQuery']];
+            if (isset($validated['filterMethod']) && ($filterMethod = $validated['filterMethod'])) {
+                $conditions[] = ['method', $filterMethod];
             }
-            if ($validated['filterMethod']) {
-                $conditions[] = ['method', $validated['filterMethod']];
+            if (isset($validated['filterStatus']) && ($filterStatus = $validated['filterStatus'])) {
+                $conditions[] = ['status', $filterStatus];
             }
-            if ($validated['filterStatus']) {
-                $conditions[] = ['status', $validated['filterStatus']];
+            if ( isset($validated['filterCreationDateRange']) && ($dateRange = $validated['filterCreationDateRange']) && $dateRange) {
+                if ( isset($dateRange['startDate']) && ($startDate = $dateRange['startDate']) && $startDate) {
+                    // $conditions[] = ['created_at', 'LIKE', "%$startDate%"];
+                    $conditions[] = ['created_at', '>=', $startDate];
+                }
+                if ( isset($dateRange['endDate']) && ($endDate = $dateRange['endDate']) && $endDate) {
+                    // $conditions[] = ['created_at', 'LIKE', "%$endDate%"];
+                    $conditions[] = ['created_at', '<=', $endDate];
+                }
             }
 
-            $baseApi = BaseApi::latest()
-            ->where($conditions)
+            $baseApi = BaseApi::latest()->where($conditions)
             ->get();
 
-            return new BaseApiResource($baseApi);
+            return BaseApiResource::collection($baseApi);
 
         }else {
             return response()->json($validator->errors()->all(),);
@@ -164,8 +202,10 @@ class ApiController extends Controller
     /**
      * Enable/Disable API Endpoint.
      */
-    public function status(Request $request)
+    public function status(Request $request, $id)
     {
+        $baseApi = BaseApi::findOrfail($id);
+
         if ( !$request->accepts(['application/json']) ) {
             return response()->json('Only JSON Format accepted',);
         }
@@ -173,13 +213,10 @@ class ApiController extends Controller
         $validated = json_decode(json_encode($request->all()), true);
 
         $validator = Validator::make($validated, [
-            'id' => 'required|numeric',
             'status' => 'required|in:enabled,disabled',
         ]);
 
         if ($validator->passes() ){
-
-            $baseApi = BaseApi::findOrfail($validated['id']);
 
             $baseApi->update(['status' => $validated['status']]);
 

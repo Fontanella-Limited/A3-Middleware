@@ -139,7 +139,7 @@ class ApiKeyController extends Controller
 
         $validator = Validator::make($validated, [
             'searchBy' => 'required|in:id,name,status',
-            'searchQuery' => 'required|string|max:255',
+            'searchQuery' => 'sometimes|string|max:255|nullable',
         ]);
 
         if ($validator->passes() ){
@@ -178,23 +178,23 @@ class ApiKeyController extends Controller
         if ($validator->passes() ){
 
             $conditions = [];
-            if (isset($validated['filterStatus']) && $validated['filterStatus']) {
-                $conditions[] = ['status', $validated['filterStatus']];
+            if (isset($validated['filterStatus']) && ($filterStatus = $validated['filterStatus'])) {
+                $conditions[] = ['status', $filterStatus];
             }
-            if (isset($validated['filterPermissions']) && $validated['filterPermissions']) {
-                $conditions[] = ['permissions', 'LIKE', '%'.$validated['filterPermissions'].'%'];
+            if (isset($validated['filterPermissions']) && ($filterPermissions = $validated['filterPermissions'])) {
+                $conditions[] = ['permissions', 'LIKE', "%$filterPermissions%"];
             }
-            if (isset($validated['filterCreationDateRange']) && $validated['filterCreationDateRange']) {
-                if (null !== ($startDate = $validated['filterCreationDateRange']['startDate']) && $startDate) {
+            if ( isset($validated['filterCreationDateRange']) && ($dateRange = $validated['filterCreationDateRange']) && $dateRange) {
+                if ( isset($dateRange['startDate']) && ($startDate = $dateRange['startDate']) && $startDate) {
                     // $conditions[] = ['created_at', 'LIKE', "%$startDate%"];
                     $conditions[] = ['created_at', '>=', $startDate];
                 }
-                if (null !== ($endDate = $validated['filterCreationDateRange']['endDate']) && $endDate) {
+                if ( isset($dateRange['endDate']) && ($endDate = $dateRange['endDate']) && $endDate) {
                     // $conditions[] = ['created_at', 'LIKE', "%$endDate%"];
                     $conditions[] = ['created_at', '<=', $endDate];
                 }
             }
-            if (null !== ($expiry_date = $validated['filterExpiryDate']) && $expiry_date) {
+            if (isset($validated['filterExpiryDate']) && ($expiry_date = $validated['filterExpiryDate']) && $expiry_date) {
                 $conditions[] = ['expiry_date', 'LIKE', "%$expiry_date%"];
                 // $conditions[] = ['expiry_date', $expiry_date];
             }

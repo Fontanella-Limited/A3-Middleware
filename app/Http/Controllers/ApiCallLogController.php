@@ -96,6 +96,44 @@ class ApiCallLogController extends Controller
         ]);
     }
 
+
+    /**
+     * Search a listing of the resource.
+     */
+    public function search(Request $request)
+    {
+        if ( !$request->accepts(['application/json']) ) {
+            return response()->json('Only JSON Format accepted',);
+        }
+
+        $validated = json_decode(json_encode($request->all()), true);
+
+        $validator = Validator::make($validated, [
+            'searchBy' => 'required|in:endpoint,method,status',
+            'searchQuery' => 'sometimes|string|max:255|nullable',
+        ]);
+
+        if ($validator->passes() ){
+
+            if ( $validated['searchBy'] == 'status') {
+                $apiKeys = ApiCallLog::where('status', $validated['searchQuery']);
+            }else {
+                $apiKeys = BaseApi::latest()
+                ->where($validated['searchBy'], 'LIKE', "%".$validated['searchQuery']."%")
+                ->get()->filter(function($key){
+                    return $key->api_call_log->count();
+                })->map(function($key){
+                    return $key->api_call_log;
+                })->collapse();
+            }
+
+            return ApiCallLogResource::collection($apiKeys);
+
+        }else {
+            return response()->json($validator->errors()->all(),);
+        }
+    }
+
     /**
      * Filter a listing of the resource.
      */
@@ -108,29 +146,38 @@ class ApiCallLogController extends Controller
         $validated = json_decode(json_encode($request->all()), true);
 
         $validator = Validator::make($validated, [
-            'searchQuery' => 'sometimes|string|max:255|nullable',
             'filterMethod' => 'sometimes|in:post,get,put,patch,head,delete|nullable',
-            'filterStatus' => 'sometimes|in:enabled,disabled|nullable',
+            'filterStatus' => 'sometimes|in:success,failed|nullable',
+            'filterCreationDateRange' => 'sometimes|array|min:0',
+                'filterCreationDateRange.startDate' => 'sometimes|date|nullable',
+                'filterCreationDateRange.endDate' => 'sometimes|date|nullable',
+            'filterExpiryDate' => 'sometimes|date|nullable',
         ]);
 
         if ($validator->passes() ){
 
             $conditions = [];
-            if ($validated['searchQuery']) {
-                $conditions[] = ['endpoint', $validated['searchQuery']];
+            if ( isset($validated['filterMethod']) && $filterMethod = $validated['filterMethod'] ) {
+                $conditions[] = ['method', $filterMethod];
             }
-            if ($validated['filterMethod']) {
-                $conditions[] = ['method', $validated['filterMethod']];
+            if ( isset($validated['filterStatus']) && ($filterStatus = $validated['filterStatus']) ) {
+                $conditions[] = ['status', $filterStatus];
             }
-            if ($validated['filterStatus']) {
-                $conditions[] = ['status', $validated['filterStatus']];
+            if ( isset($validated['filterCreationDateRange']) && ($dateRange = $validated['filterCreationDateRange']) && $dateRange) {
+                if ( isset($dateRange['startDate']) && ($startDate = $dateRange['startDate']) && $startDate) {
+                    // $conditions[] = ['created_at', 'LIKE', "%$startDate%"];
+                    $conditions[] = ['created_at', '>=', $startDate];
+                }
+                if ( isset($dateRange['endDate']) && ($endDate = $dateRange['endDate']) && $endDate) {
+                    // $conditions[] = ['created_at', 'LIKE', "%$endDate%"];
+                    $conditions[] = ['created_at', '<=', $endDate];
+                }
             }
 
-            $baseApi = ApiCallLog::latest()
-            ->where($conditions)
+            $apiCallLogs = ApiCallLog::latest() ->where($conditions)
             ->get();
 
-            return new ApiCallLogResource($baseApi);
+            return new ApiCallLogResource($apiCallLogs);
 
         }else {
             return response()->json($validator->errors()->all(),);
