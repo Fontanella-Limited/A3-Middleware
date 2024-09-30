@@ -142,8 +142,6 @@ class UserController extends Controller
             'filterType' => 'sometimes|in:admin,developer,viewer|nullable',
         ]);
 
-        // return response()->json($validated,);
-
         if ($validator->passes() ){
 
             $conditions = [];
