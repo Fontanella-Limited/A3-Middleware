@@ -20,7 +20,7 @@ class ApiCallLog extends Model
      */
     protected $fillable = [
         // 'user_id',
-        'base_api_id',
+        'endpoint_id',
         'response',
         'response_time',
         'status',
@@ -39,13 +39,13 @@ class ApiCallLog extends Model
     }
 
     /**
-     * Get the base_api that owns the ApiCallLog
+     * Get the endpoint that owns the ApiCallLog
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function base_api(): BelongsTo
+    public function endpoint(): BelongsTo
     {
-        return $this->belongsTo(BaseApi::class);
+        return $this->belongsTo(Endpoint::class);
     }
 
     public static function getSuccessfulCalls()

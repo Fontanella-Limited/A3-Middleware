@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\BaseApiResource;
-use App\Models\BaseApi;
+use App\Http\Resources\EndpointResource;
+use App\Models\Endpoint;
 use App\Models\ApiCallLog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -17,7 +17,7 @@ class ApiController extends Controller
      */
     public function index()
     {
-        return BaseApiResource::collection(BaseApi::latest()->get());
+        return EndpointResource::collection(Endpoint::latest()->get());
     }
 
     /**
@@ -32,7 +32,7 @@ class ApiController extends Controller
         $validated = json_decode(json_encode($request->all()), true);
 
         $validator = Validator::make($validated, [
-            'endpoint' => ['required','string','max:255','unique:'.BaseApi::class],
+            'endpoint' => ['required','string','max:255','unique:'.Endpoint::class],
             'method' => 'required|in:post,get,put,patch,head,delete',
             'description' => 'string|max:255',
             'status' => 'in:enabled,disabled',
@@ -43,9 +43,9 @@ class ApiController extends Controller
 
         if ($validator->passes() ){
 
-            $baseApi = BaseApi::create($validated);
+            $endpoint = Endpoint::create($validated);
 
-            return new BaseApiResource($baseApi);
+            return new EndpointResource($endpoint);
 
         }else {
             return response()->json($validator->errors()->all(),);
@@ -58,7 +58,7 @@ class ApiController extends Controller
      */
     public function show(string $id)
     {
-        return new BaseApiResource(BaseApi::findOrFail($id));
+        return new EndpointResource(Endpoint::findOrFail($id));
     }
 
     /**
@@ -66,7 +66,7 @@ class ApiController extends Controller
      */
     public function edit(string $id)
     {
-        return new BaseApiResource(BaseApi::findOrFail($id));
+        return new EndpointResource(Endpoint::findOrFail($id));
     }
 
     /**
@@ -74,7 +74,7 @@ class ApiController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $baseApi = BaseApi::findOrFail($id);
+        $endpoint = Endpoint::findOrFail($id);
 
         if ( !$request->accepts(['application/json']) ) {
             return response()->json('Only JSON Format accepted',);
@@ -83,7 +83,7 @@ class ApiController extends Controller
         $validated = json_decode(json_encode($request->all()), true);
 
         $validator = Validator::make($validated, [
-            'endpoint' => ['required','string','max:255',Rule::unique(BaseApi::class)->ignore($baseApi->id)],
+            'endpoint' => ['required','string','max:255',Rule::unique(Endpoint::class)->ignore($endpoint->id)],
             'method' => 'required|in:post,get,put,patch,head,delete',
             'description' => 'string|max:255',
             'status' => 'in:enabled,disabled',
@@ -94,9 +94,9 @@ class ApiController extends Controller
 
         if ($validator->passes() ){
 
-            $baseApi->update($validated);
+            $endpoint->update($validated);
 
-            return new BaseApiResource($baseApi);
+            return new EndpointResource($endpoint);
 
         }else {
             return response()->json($validator->errors()->all(),);
@@ -109,9 +109,9 @@ class ApiController extends Controller
      */
     public function destroy(string $id)
     {
-        $baseApi = BaseApi::findOrFail($id);
+        $endpoint = Endpoint::findOrFail($id);
 
-        $baseApi->delete($baseApi);
+        $endpoint->delete($endpoint);
 
         return response()->json([
             "success" => true,
@@ -138,11 +138,11 @@ class ApiController extends Controller
 
         if ($validator->passes() ){
 
-            $apiKeys = BaseApi::latest()
+            $apiKeys = Endpoint::latest()
             ->where($validated['searchBy'], 'LIKE', "%".$validated['searchQuery']."%")
             ->get();
 
-            return BaseApiResource::collection($apiKeys);
+            return EndpointResource::collection($apiKeys);
 
         }else {
             return response()->json($validator->errors()->all(),);
@@ -189,10 +189,10 @@ class ApiController extends Controller
                 }
             }
 
-            $baseApi = BaseApi::latest()->where($conditions)
+            $endpoint = Endpoint::latest()->where($conditions)
             ->get();
 
-            return BaseApiResource::collection($baseApi);
+            return EndpointResource::collection($endpoint);
 
         }else {
             return response()->json($validator->errors()->all(),);
@@ -204,7 +204,7 @@ class ApiController extends Controller
      */
     public function status(Request $request, $id)
     {
-        $baseApi = BaseApi::findOrfail($id);
+        $endpoint = Endpoint::findOrfail($id);
 
         if ( !$request->accepts(['application/json']) ) {
             return response()->json('Only JSON Format accepted',);
@@ -218,12 +218,12 @@ class ApiController extends Controller
 
         if ($validator->passes() ){
 
-            $baseApi->update(['status' => $validated['status']]);
+            $endpoint->update(['status' => $validated['status']]);
 
             return response()->json([
                 "success" => true,
                 "message" => "API endpoint status updated successfully.",
-                "status" => $baseApi->status,
+                "status" => $endpoint->status,
             ], 200);
 
         }else {
@@ -236,15 +236,15 @@ class ApiController extends Controller
      */
     public function analytics()
     {
-        $baseApis = BaseApi::all();
+        $endpoints = Endpoint::all();
 
-        $activeApis = BaseApi::getActiveApis();
+        $activeApis = Endpoint::getActiveApis();
 
         $successfulCalls = ApiCallLog::getSuccessfulCalls();
         $totalResponseTime = ApiCallLog::getTotalResponseTime();
 
         $data = [
-            "totalApiEndpoints" => $totalCount = $baseApis->count(),
+            "totalApiEndpoints" => $totalCount = $endpoints->count(),
             "activeApiEndpoints" => $activeCount = $activeApis->count(),
             "inactiveApiEndpoints" => $totalCount - $activeCount,
             "apiCallStatistics" => [
@@ -264,24 +264,24 @@ class ApiController extends Controller
      */
     public function history()
     {
-        $baseApis = BaseApi::all()
-        ->map( function ($base_api) {
+        $endpoints = Endpoint::all()
+        ->map( function ($endpoint) {
 
-            $callLogs = $base_api->api_call_log;
+            $callLogs = $endpoint->api_call_log;
 
             return [
-                "apiName" => $base_api->endpoint,
-                "method" => $base_api->method,
+                "apiName" => $endpoint->endpoint,
+                "method" => $endpoint->method,
                 "callsMade" => $callsMade = $callLogs->count(),
                 "averageResponseTime" => ($callsMade) ?
                 number_format($callLogs->reduce(function($sum,$log){
                     return $sum += intVal($log->response_time);
                 }, 0) / $callsMade, 2) : 0,
-                "status" => $base_api->status,
+                "status" => $endpoint->status,
             ];
         });
 
-        return response()->json($baseApis, 200);
+        return response()->json($endpoints, 200);
 
     }
 

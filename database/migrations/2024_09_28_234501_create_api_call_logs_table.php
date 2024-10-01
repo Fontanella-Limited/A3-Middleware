@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('api_call_logs', function (Blueprint $table) {
             $table->id();
-            // $table->foreign('user_id')->references('id')
-            // ->on('users')->onupdate('cascade')->onDelete('cascade');
-            $table->string('base_api_id')->references('id')
-            ->on('base_apis')->onupdate('cascade')->onDelete('cascade');
+            $table->integer('endpoint_id')->foreign()
+                ->references('id')
+                ->on('endpoints')
+                ->onDelete('cascade');
             $table->json('response')->nullable();
             $table->integer('response_time');
             $table->enum('status',['success','failed']);

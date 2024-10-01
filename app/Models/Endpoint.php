@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class BaseApi extends Model
+class Endpoint extends Model
 {
     use HasFactory;
 
@@ -42,7 +42,7 @@ class BaseApi extends Model
     }
 
     /**
-     * Get all of the api_call_log for the BaseApi
+     * Get all of the api_call_log for the Endpoint
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
@@ -73,7 +73,7 @@ class BaseApi extends Model
 
     public static function getActiveApis()
     {
-        return BaseApi::where('status', 'enabled')->get();
+        return Endpoint::where('status', 'enabled')->get();
     }
 
 }

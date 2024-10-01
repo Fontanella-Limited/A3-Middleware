@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\BaseApi;
+use App\Models\Endpoint;
 use App\Models\ApiCallLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
@@ -15,7 +15,7 @@ class ApiCall
      *
      * @return void
      */
-    public function __construct(protected BaseApi $baseApi)
+    public function __construct(protected Endpoint $endpoint)
     {
         // $this->middleware('auth');
     }
@@ -44,7 +44,7 @@ class ApiCall
         }
         $data['response_time'] = microtime(true) - $start_time; // end of response
 
-        $data['base_api_id'] = $this->baseApi->id;
+        $data['endpoint_id'] = $this->baseApi->id;
         $data['status'] = $response->ok() ? 'success':'failed';
         $data['response'] = [
             'headers' => $response->headers(),

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('base_apis', function (Blueprint $table) {
+        Schema::create('endpoints', function (Blueprint $table) {
             $table->id();
             $table->string('endpoint')->unique();
             $table->enum('method',['post','get','put','patch','head','delete']);
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('base_apis');
+        Schema::dropIfExists('endpoints');
     }
 };

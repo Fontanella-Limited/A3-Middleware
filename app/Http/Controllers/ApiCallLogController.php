@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\ApiCallLogResource;
-use App\Models\BaseApi;
+use App\Models\Endpoint;
 use App\Models\ApiCallLog;
 use App\Services\ApiCall;
 use Illuminate\Http\Request;
@@ -45,9 +45,9 @@ class ApiCallLogController extends Controller
 
         if ($validator->passes() ){
 
-            $baseApi = BaseApi::findOrFail( $validated['id'] );
+            $endpoint = Endpoint::findOrFail( $validated['id'] );
 
-            return (new ApiCall($baseApi))->makeCall();
+            return (new ApiCall($endpoint))->makeCall();
 
         }else {
             return response()->json($validator->errors()->all(),);
@@ -118,7 +118,7 @@ class ApiCallLogController extends Controller
             if ( $validated['searchBy'] == 'status') {
                 $apiKeys = ApiCallLog::where('status', $validated['searchQuery']);
             }else {
-                $apiKeys = BaseApi::latest()
+                $apiKeys = Endpoint::latest()
                 ->where($validated['searchBy'], 'LIKE', "%".$validated['searchQuery']."%")
                 ->get()->filter(function($key){
                     return $key->api_call_log->count();
