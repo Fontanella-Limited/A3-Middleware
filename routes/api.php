@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\ApiCallLogController;
 use App\Http\Controllers\ApiKeyController;
+use App\Http\Controllers\ApiSettingsController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -66,4 +67,14 @@ Route::controller(ApiKeyController::class)->group(function () {
     Route::get('/apikeys/search', 'search')->name('apikeys.search');
     Route::get('/apikeys/filter', 'filter')->name('apikeys.filter');
     Route::get('/apikeys/{id}', 'show')->name('apikeys.show');
+});
+
+// ----------------------------API SETTINGS ------------------------------//
+Route::controller(ApiSettingsController::class)->group(function () {
+    Route::get('/settings', 'index')->name('settings.index');
+    Route::post('/settings/{category}/store', 'store')->name('settings.store');
+    Route::get('/settings/{category}/edit', 'edit')->name('settings.edit');
+    Route::post('/settings/{category}/update', 'update')->name('settings.update');
+    Route::delete('/settings/{category}/delete', 'destroy')->name('settings.delete');
+    Route::get('/settings/{category}', 'show')->name('settings.show');
 });
