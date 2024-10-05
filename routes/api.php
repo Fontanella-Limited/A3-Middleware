@@ -4,17 +4,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Resource\UserResource as User;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\ApiController;
+use App\Http\Controllers\EndpointController;
 use App\Http\Controllers\ApiCallLogController;
 use App\Http\Controllers\ApiKeyController;
 use App\Http\Controllers\ApiSettingsController;
+use App\Http\Controllers\PerformanceMonitoringController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
 // })->middleware('auth:sanctum');
 
 
-// ----------------------------USER MGMT. ------------------------------//
+// ---------------------------- USER MGMT. ------------------------------//
 Route::controller(UserController::class)->group(function () {
     Route::get('/users', 'index')->name('users.index');
     Route::post('/users/store', 'store')->name('users.store');
@@ -26,22 +27,22 @@ Route::controller(UserController::class)->group(function () {
     Route::get('/users/{id}', 'show')->name('users.show');
 });
 
-// ----------------------------API MGMT. ------------------------------//
-Route::controller(ApiController::class)->group(function () {
-    Route::get('/apis', 'index')->name('apis.index');
-    Route::post('/apis/store', 'store')->name('apis.store');
-    Route::get('/apis/edit/{id}', 'edit')->name('apis.edit');
-    Route::post('/apis/update/{id}', 'update')->name('apis.update');
-    Route::delete('/apis/delete/{id}', 'destroy')->name('apis.delete');
-    Route::post('/apis/status/{id}', 'status')->name('apis.status');
-    Route::get('/apis/search', 'search')->name('apis.search');
-    Route::get('/apis/filter', 'filter')->name('apis.filter');
-    Route::get('/apis/analytics', 'analytics')->name('apis.analytics');
-    Route::get('/apis/history', 'history')->name('apis.history');
-    Route::get('/apis/{id}', 'show')->name('apis.show');
+// ---------------------------- API MGMT. ------------------------------//
+Route::controller(EndpointController::class)->group(function () {
+    Route::get('/endpoints', 'index')->name('endpoints.index');
+    Route::post('/endpoints/store', 'store')->name('endpoints.store');
+    Route::get('/endpoints/edit/{id}', 'edit')->name('endpoints.edit');
+    Route::post('/endpoints/update/{id}', 'update')->name('endpoints.update');
+    Route::delete('/endpoints/delete/{id}', 'destroy')->name('endpoints.delete');
+    Route::post('/endpoints/status/{id}', 'status')->name('endpoints.status');
+    Route::get('/endpoints/search', 'search')->name('endpoints.search');
+    Route::get('/endpoints/filter', 'filter')->name('endpoints.filter');
+    Route::get('/endpoints/analytics', 'analytics')->name('endpoints.analytics');
+    Route::get('/endpoints/history', 'history')->name('endpoints.history');
+    Route::get('/endpoints/{id}', 'show')->name('endpoints.show');
 });
 
-// ----------------------------CALL LOG MGMT. ------------------------------//
+// ---------------------------- CALL LOG MGMT. ------------------------------//
 Route::controller(ApiCallLogController::class)->group(function () {
     Route::get('/call-logs', 'index')->name('call-logs.index');
     Route::post('/call-logs/store', 'store')->name('call-logs.store');
@@ -54,7 +55,7 @@ Route::controller(ApiCallLogController::class)->group(function () {
     Route::get('/call-logs/{id}', 'show')->name('call-logs.show');
 });
 
-// ----------------------------API KEY MGMT. ------------------------------//
+// ---------------------------- API KEY MGMT. ------------------------------//
 Route::controller(ApiKeyController::class)->group(function () {
     Route::get('/apikeys', 'index')->name('apikeys.index');
     Route::post('/apikeys/store', 'store')->name('apikeys.store');
@@ -69,12 +70,19 @@ Route::controller(ApiKeyController::class)->group(function () {
     Route::get('/apikeys/{id}', 'show')->name('apikeys.show');
 });
 
-// ----------------------------API SETTINGS ------------------------------//
+// ---------------------------- API SETTINGS ------------------------------//
 Route::controller(ApiSettingsController::class)->group(function () {
     Route::get('/settings', 'index')->name('settings.index');
-    Route::post('/settings/{category}/store', 'store')->name('settings.store');
-    Route::get('/settings/{category}/edit', 'edit')->name('settings.edit');
-    Route::post('/settings/{category}/update', 'update')->name('settings.update');
-    Route::delete('/settings/{category}/delete', 'destroy')->name('settings.delete');
-    Route::get('/settings/{category}', 'show')->name('settings.show');
+    Route::post('/settings/store', 'store')->name('settings.store');
+    Route::get('/settings/edit/{id}', 'edit')->name('settings.edit');
+    Route::post('/settings/update/{id}', 'update')->name('settings.update');
+    Route::delete('/settings/delete/{id}', 'destroy')->name('settings.delete');
+    Route::get('/settings/{id}', 'show')->name('settings.show');
+});
+
+// ---------------------------- PERFORMANCE MONITORING ------------------------------//
+Route::controller(PerformanceMonitoringController::class)->group(function () {
+    Route::get('/performances', 'index')->name('performances.index');
+    Route::get('/performances/logs', 'logs')->name('performances.logs');
+    Route::get('/performances/filter', 'filter')->name('performances.filter');
 });

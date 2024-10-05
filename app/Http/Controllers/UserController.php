@@ -6,6 +6,7 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Validator;
 
 class UserController extends Controller
@@ -23,7 +24,11 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        return new UserResource(User::findOrFail($id));
+        try {
+            return new UserResource(User::findOrFail($id));
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'User not found!']);
+        }
     }
 
     /**
@@ -41,7 +46,13 @@ class UserController extends Controller
 
         $user = User::create($validated);
 
-        return new UserResource($user);
+        $data = [
+            'status' => true,
+            'message' => 'User created successfully!',
+            'user' => new UserResource($user)
+        ];
+
+        return response()->json($data);
 
     }
 
@@ -50,7 +61,11 @@ class UserController extends Controller
      */
     public function edit(string $id)
     {
-        return new UserResource(User::findOrFail($id));
+        try {
+            return new UserResource(User::findOrFail($id));
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'User not found!']);
+        }
     }
 
     /**
@@ -58,7 +73,11 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $user = User::findOrFail($id);
+        try {
+            $user = User::findOrFail($id);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'User not found!']);
+        }
 
         $validated = $request->validate([
             'first_name' => 'sometimes|string|max:255',
@@ -68,9 +87,16 @@ class UserController extends Controller
             'type' => 'sometimes|in:admin,developer,viewer',
         ]);
 
-        $user->update($validated);
+        $updated = $user->update($validated);
 
-        return new UserResource($user);
+        $data = [
+            'message' => ($updated) ? "User profile updated successfully":
+                'Failed to update user profile',
+            'user' => new UserResource($user),
+        ];
+
+        return response()->json($data);
+
     }
 
     /**
@@ -78,15 +104,18 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        $user = User::findOrFail($id);
+        try {
+            $user = User::findOrFail($id);
+            $user->delete($user);
 
-        $user->delete($user);
+            return response()->json([
+                "success" => true,
+                "message" => "User deleted successfully."
+            ]);
 
-        return response()->json([
-            "success" => true,
-            "message" => "User deleted successfully."
-        ]);
-
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'User not found!']);
+        }
     }
 
     /**
@@ -94,21 +123,25 @@ class UserController extends Controller
      */
     public function status(Request $request, $id)
     {
-        $user = User::findOrFail($id);
-
         if ( !$request->accepts(['application/json']) ) {
             return response()->json('Only JSON Format accepted',);
         }
 
-        $validated = json_decode(json_encode($request->all()), true);
+        try {
+            $user = User::findOrFail($id);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'User not found!']);
+        }
 
-        $validator = Validator::make($validated, [
+        $data = json_decode(json_encode($request->all()), true);
+
+        $validator = Validator::make($data, [
             'status' => 'required|in:active,inactive',
         ]);
 
         if ($validator->passes() ){
 
-            $user->update(['status' => $validated['status']]);
+            $user->update( $validator->validated() );
 
             $action = ($user->status == 'active') ?
             'activated' : 'deactivated';

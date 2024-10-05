@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ApiSetting extends Model
 {
@@ -25,7 +28,14 @@ class ApiSetting extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'settings',
+        'api_name',
+        'globalSettings',
+        'authentication',
+        'security',
+        'logging',
+        'performance',
+        'versionControl',
+        'errorHandling'
     ];
 
     /**
@@ -36,22 +46,35 @@ class ApiSetting extends Model
     protected function casts(): array
     {
         return [
-            'settings' => 'json',
+            'globalSettings' => 'json',
+            'authentication' => 'json',
+            'security' => 'json',
+            'logging' => 'json',
+            'performance' => 'json',
+            'versionControl' => 'json',
+            'errorHandling' => 'json'
         ];
     }
 
-    public function getSettings()
+    /**
+     * Get all of the endpoints for the ApiSetting
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function endpoints(): HasMany
     {
-        $settings = $this->settings;
-        return [
-            "globalSettings" => $settings['globalSettings'] ?? [],
-            "authentication" => $settings['authentication'] ?? [],
-            "security" => $settings['security'] ?? [],
-            "logging" => $settings['logging'] ?? [],
-            "performance" => $settings['performance'] ?? [],
-            "versionControl" => $settings['versionControl'] ?? [],
-            "errorHandling" => $settings['errorHandling'] ?? [],
-        ];
+        return $this->hasMany(Endpoint::class, 'base_api_id');
+    }
+
+    public function getApiName( )
+    {
+        return $this->api_name;
+    }
+
+    public function getBaseUrl( )
+    {
+        return ($globalSettings = $this->globalSettings) ?
+        $globalSettings['baseUrl'] : '';
     }
 
     public function getSettingsCategory( $category )

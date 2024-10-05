@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('endpoints', function (Blueprint $table) {
             $table->id();
-            $table->string('endpoint')->unique();
+            $table->integer('base_api_id');
+            $table->string('endpoint');
             $table->enum('method',['post','get','put','patch','head','delete']);
             $table->text('description')->nullable();
             $table->enum('status',['enabled','disabled'])->default('enabled');
@@ -21,6 +22,9 @@ return new class extends Migration
             $table->json('payload')->nullable();
             $table->json('parameters')->nullable();
             $table->timestamps();
+            $table->softDeletes();
+            $table->unique(['base_api_id','endpoint','method'],
+                'apis_unique_endpoint');
         });
     }
 

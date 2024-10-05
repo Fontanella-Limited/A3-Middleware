@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Endpoint extends Model
@@ -18,6 +19,7 @@ class Endpoint extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'base_api_id',
         'endpoint',
         'method',
         'description',
@@ -51,7 +53,17 @@ class Endpoint extends Model
         return $this->hasMany(ApiCallLog::class);
     }
 
-    public function getEndPoint() {
+    /**
+     * Get the base_api that owns the Endpoint
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function base_api(): BelongsTo
+    {
+        return $this->belongsTo(ApiSetting::class, 'base_api_id');
+    }
+
+    public function getEndpoint() {
         return $this->endpoint;
     }
 

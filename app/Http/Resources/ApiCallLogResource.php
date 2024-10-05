@@ -19,7 +19,7 @@ class ApiCallLogResource extends JsonResource
             "status" => $this->status,
             "response" => $this->response,
             "response_time" => $this->response_time,
-            "endpoint" => $this->endpoint,
+            "endpoint" => new EndpointResource($this->endpoint),
         ];
     }
 }

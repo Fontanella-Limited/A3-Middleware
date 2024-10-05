@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ApiCallLogResource;
 use App\Models\Endpoint;
 use App\Models\ApiCallLog;
+use App\Models\ApiSetting;
 use App\Services\ApiCall;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Validator;
 
 class ApiCallLogController extends Controller
@@ -43,15 +45,18 @@ class ApiCallLogController extends Controller
             'id' => 'required|numeric',
         ]);
 
-        if ($validator->passes() ){
-
-            $endpoint = Endpoint::findOrFail( $validated['id'] );
-
-            return (new ApiCall($endpoint))->makeCall();
-
-        }else {
-            return response()->json($validator->errors()->all(),);
+        if ($validator->fails() ){
+            return response()->json($validator->errors()->all());
         }
+
+        try {
+            $endpoint = Endpoint::findOrFail( $validator->validated()['id'] );
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Endpoint not found!']);
+        }
+
+        return (new ApiCall($endpoint))->makeCall();
+
     }
 
     /**
@@ -59,7 +64,11 @@ class ApiCallLogController extends Controller
      */
     public function show(string $id)
     {
-        return new ApiCallLogResource(ApiCallLog::findOrfail($id));
+        try {
+            return new ApiCallLogResource(ApiCallLog::findOrfail($id));
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'API call log not found!']);
+        }
     }
 
     /**
@@ -67,7 +76,11 @@ class ApiCallLogController extends Controller
      */
     public function edit(string $id)
     {
-        return new ApiCallLogResource(ApiCallLog::findOrfail($id));
+        try {
+            return new ApiCallLogResource(ApiCallLog::findOrfail($id));
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'API call log not found!']);
+        }
     }
 
     /**
@@ -76,7 +89,7 @@ class ApiCallLogController extends Controller
     public function update(Request $request, string $id)
     {
         return response()->json([
-            "success" => true,
+            "success" => false,
             "message" => "Action not supported!"
         ]);
     }
@@ -86,14 +99,20 @@ class ApiCallLogController extends Controller
      */
     public function destroy(string $id)
     {
-        $callLog = ApiCallLog::findOrFail($id);
+        try {
+            $callLog = ApiCallLog::findOrFail($id);
 
-        $callLog->delete($callLog);
+            $callLog->delete();
 
-        return response()->json([
-            "success" => true,
-            "message" => "API call log deleted successfully."
-        ]);
+            return response()->json([
+                "success" => true,
+                "message" => "API call log deleted successfully."
+            ]);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'API call log not found!']);
+        }
+
     }
 
 
@@ -113,25 +132,26 @@ class ApiCallLogController extends Controller
             'searchQuery' => 'sometimes|string|max:255|nullable',
         ]);
 
-        if ($validator->passes() ){
-
-            if ( $validated['searchBy'] == 'status') {
-                $apiKeys = ApiCallLog::where('status', $validated['searchQuery']);
-            }else {
-                $apiKeys = Endpoint::latest()
-                ->where($validated['searchBy'], 'LIKE', "%".$validated['searchQuery']."%")
-                ->get()->filter(function($key){
-                    return $key->api_call_log->count();
-                })->map(function($key){
-                    return $key->api_call_log;
-                })->collapse();
-            }
-
-            return ApiCallLogResource::collection($apiKeys);
-
-        }else {
-            return response()->json($validator->errors()->all(),);
+        if ($validator->fails() ){
+            return response()->json($validator->errors()->all());
         }
+
+        $validated = $validator->validated();
+
+        if ( $validated['searchBy'] == 'status') {
+            $apiKeys = ApiCallLog::where('status', $validated['searchQuery']);
+        }else {
+            $apiKeys = Endpoint::latest()
+            ->where($validated['searchBy'], 'LIKE', "%".$validated['searchQuery']."%")
+            ->get()->filter(function($key){
+                return $key->api_call_log->count();
+            })->map(function($key){
+                return $key->api_call_log;
+            })->collapse();
+        }
+
+        return ApiCallLogResource::collection($apiKeys);
+
     }
 
     /**
@@ -154,34 +174,34 @@ class ApiCallLogController extends Controller
             'filterExpiryDate' => 'sometimes|date|nullable',
         ]);
 
-        if ($validator->passes() ){
-
-            $conditions = [];
-            if ( isset($validated['filterMethod']) && $filterMethod = $validated['filterMethod'] ) {
-                $conditions[] = ['method', $filterMethod];
-            }
-            if ( isset($validated['filterStatus']) && ($filterStatus = $validated['filterStatus']) ) {
-                $conditions[] = ['status', $filterStatus];
-            }
-            if ( isset($validated['filterCreationDateRange']) && ($dateRange = $validated['filterCreationDateRange']) && $dateRange) {
-                if ( isset($dateRange['startDate']) && ($startDate = $dateRange['startDate']) && $startDate) {
-                    // $conditions[] = ['created_at', 'LIKE', "%$startDate%"];
-                    $conditions[] = ['created_at', '>=', $startDate];
-                }
-                if ( isset($dateRange['endDate']) && ($endDate = $dateRange['endDate']) && $endDate) {
-                    // $conditions[] = ['created_at', 'LIKE', "%$endDate%"];
-                    $conditions[] = ['created_at', '<=', $endDate];
-                }
-            }
-
-            $apiCallLogs = ApiCallLog::latest() ->where($conditions)
-            ->get();
-
-            return new ApiCallLogResource($apiCallLogs);
-
-        }else {
-            return response()->json($validator->errors()->all(),);
+        if ($validator->fails() ){
+            return response()->json($validator->errors()->all());
         }
+
+        $validated = $validator->validated();
+
+        $conditions = [];
+        if ( isset($validated['filterMethod']) && $filterMethod = $validated['filterMethod'] ) {
+            $conditions[] = ['method', $filterMethod];
+        }
+        if ( isset($validated['filterStatus']) && ($filterStatus = $validated['filterStatus']) ) {
+            $conditions[] = ['status', $filterStatus];
+        }
+        if ( isset($validated['filterCreationDateRange']) && ($dateRange = $validated['filterCreationDateRange']) && $dateRange) {
+            if ( isset($dateRange['startDate']) && ($startDate = $dateRange['startDate']) && $startDate) {
+                // $conditions[] = ['created_at', 'LIKE', "%$startDate%"];
+                $conditions[] = ['created_at', '>=', $startDate];
+            }
+            if ( isset($dateRange['endDate']) && ($endDate = $dateRange['endDate']) && $endDate) {
+                // $conditions[] = ['created_at', 'LIKE', "%$endDate%"];
+                $conditions[] = ['created_at', '<=', $endDate];
+            }
+        }
+
+        $apiCallLogs = ApiCallLog::latest() ->where($conditions)
+        ->get();
+
+        return new ApiCallLogResource($apiCallLogs);
 
     }
 
@@ -190,19 +210,14 @@ class ApiCallLogController extends Controller
      */
     public function analytics(Request $request)
     {
-        $callLogs = ApiCallLog::all();
-
-        $successfulCalls = ApiCallLog::getSuccessfulCalls();
-        $totalResponseTime = ApiCallLog::getTotalResponseTime();
-
         $data = [
-            'totalCalls' => $totalCalls = $callLogs->count(),
-            'successfulCalls' => $successfulCallsCount = $successfulCalls->count(),
+            'totalCalls' => $totalCalls = ApiCallLog::totalCalls(),
+            'successfulCalls' => $successfulCallsCount = ApiCallLog::getSuccessfulCalls(),
             'failedCalls' => $totalCalls - $successfulCallsCount,
-            'averageResponseTime' => ($totalCalls) ? ($totalResponseTime / $totalCalls) : 0,
+            'averageResponseTime' => ApiCallLog::averageReponseTime(),
         ];
 
-        return response()->json($data, 200);
+        return response()->json($data);
 
     }
 }

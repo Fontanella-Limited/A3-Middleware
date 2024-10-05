@@ -14,6 +14,18 @@ class ApiSettingResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return $this->getSettings();
+        return [
+            "id" => $this->id,
+            "api_name" => $this->api_name,
+            "globalSettings" => $this->globalSettings,
+            "authentication" => $this->authentication,
+            "security" => $this->security,
+            "logging" => $this->logging,
+            "performance" => $this->performance,
+            "versionControl" => $this->versionControl,
+            "errorHandling" => $this->errorHandling,
+            "updated_at" => $this->updated_at,
+            "created_at" => $this->created_at,
+        ];
     }
 }
